@@ -1,0 +1,67 @@
+// GLSL STARTER CODE BY DANIEL S. BUCKSTEIN
+//  -> BUFFER A TAB (scene)
+
+//------------------------------------------------------------
+// RENDERING FUNCTIONS
+
+//Gets the luminance
+float luma(vec3 color) {
+    return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
+}
+
+//Bloom calculation
+vec4 bloom(vec4 color, float minLuma) {
+    vec4 returnColor = color;
+    
+    //This calculates the bloom by using the luminance of the pixel to decide to make the pixel lighter or darker
+    returnColor = returnColor * clamp(luma(returnColor.rgb) - minLuma, 0.0, 1.0) * (1.0 / (1.0 - minLuma));
+    
+    return returnColor;
+}
+
+// calcColor: calculate the color of current pixel
+//	  vp:  input viewport info
+//	  ray: input ray info
+color4 calcColor(in sViewport vp, in sRay ray)
+{
+    //get inverse of the resolution
+    sDCoord invRes = 1.0 / iChannelResolution[0].xy;
+    
+    //get location of pixel on channel a
+    sCoord uv = vp.pixelCoord * invRes;
+    sCoord uvUpRightCorner = (vp.pixelCoord + 0.5) * invRes;
+    
+    //return channel 1 color data
+    vec4 returnColor = texture(iChannel0, uv); //returning return color without bloom will return the samething as channel a
+    
+    float minLuma = 0.1; //Threshold for luminance
+    
+    returnColor = bloom(returnColor, minLuma);
+    
+    return returnColor;
+}
+
+
+//------------------------------------------------------------
+// SHADERTOY MAIN
+
+// mainImage: process the current pixel (exactly one call per pixel)
+//    fragColor: output final color for current pixel
+//    fragCoord: input location of current pixel in image (in pixels)
+void mainImage(out color4 fragColor, in sCoord fragCoord)
+{
+    // viewing plane (viewport) inputs
+    const sBasis eyePosition = sBasis(0.0);
+    const sScalar viewportHeight = 2.0, focalLength = 1.5;
+    
+    // viewport info
+    sViewport vp;
+
+    // ray
+    sRay ray;
+    
+    // render
+    initViewport(vp, viewportHeight, focalLength, fragCoord, iResolution.xy);
+    initRayPersp(ray, eyePosition, vp.viewportPoint.xyz);
+    fragColor += calcColor(vp, ray);
+}

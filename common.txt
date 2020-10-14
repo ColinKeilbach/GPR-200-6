@@ -10,7 +10,7 @@
 void mainImage(out color4 fragColor, in sCoord fragCoord)
 {
     //get inverse of the resolution
-    sDCoord = invRes = 1.0 / oChannelResolution[0].xy; //represents the pixel size in the textures space
+    sDCoord invRes = 1.0 / iChannelResolution[0].xy; //represents the pixel size in the textures space
     
     // setup
     // test UV for input image
