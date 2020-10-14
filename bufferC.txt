@@ -1,21 +1,6 @@
 //------------------------------------------------------------
 // RENDERING FUNCTIONS
 
-//Gets the luminance
-float luma(vec3 color) {
-    return 0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b;
-}
-
-//Bloom calculation
-vec4 bloom(vec4 color, float minLuma) {
-    vec4 returnColor = color;
-    
-    //This calculates the bloom by using the luminance of the pixel to decide to make the pixel lighter or darker
-    returnColor = returnColor * clamp(luma(returnColor.rgb) - minLuma, 0.0, 1.0) * (1.0 / (1.0 - minLuma));
-    
-    return returnColor;
-}
-
 // calcColor: calculate the color of current pixel
 //	  vp:  input viewport info
 //	  ray: input ray info
@@ -28,12 +13,16 @@ color4 calcColor(in sViewport vp, in sRay ray)
     sCoord uv = vp.pixelCoord * invRes;
     sCoord uvUpRightCorner = (vp.pixelCoord + 0.5) * invRes;
     
-    //return channel 1 color data
-    vec4 returnColor = texture(iChannel0, uv); //returning return color without bloom will return the samething as channel a
-    
-    float minLuma = 0.5; //Threshold for luminance
-    
-    returnColor = bloom(returnColor, minLuma);
+    //this gets the horizontal blur
+    //using the blur matrix 
+    // 1/4 [1, 2, 1]
+    // this can be turned into 
+    // [0.25, 0.5, 0.25]
+    vec4 returnColor = (
+        texture(iChannel0, vec2(uv.x - 1.0, uv.y)) * 0.25 + //this gets the pixel to the left 
+        texture(iChannel0, uv)                     * 0.5  + //this gets the current pixel
+        texture(iChannel0, vec2(uv.x + 1.0, uv.y)) * 0.25   //this gets the pixel to the right
+                       );
     
     return returnColor;
 }
